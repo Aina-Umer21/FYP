@@ -24,7 +24,14 @@ class RouteController():
         try:
             routes = Route.query.filter_by(validity=1).all()
             if routes:
-                return [{'id':r.id,'name':r.name} for r in routes]
+                for r in routes:
+                    station = StationController.get_station_by_id(r.station_id)
+                    return {'id':r.id,'name':r.name,
+                            'station_latitude': station['latitude'],
+                            'station_longitude': station['longitude'],
+                            'rows': r.rows,
+                            'columns': r.columns
+                            }
             else:
                 return []
         except Exception as e:
@@ -38,14 +45,20 @@ class RouteController():
                       .join(LocationPins, Route.id == LocationPins.route_id)
                       .filter(Route.validity == 1)
                       .all())
+
             if routes:
                 # Create a dictionary to group location pins by route
                 route_dict = {}
                 for route, location in routes:
+                    station = StationController.get_station_by_id(route.station_id)
                     if route.id not in route_dict:
                         route_dict[route.id] = {
                             'id': route.id,
                             'name': route.name,
+                            'station_latitude': station['latitude'],
+                            'station_longitude': station['longitude'],
+                            'rows': route.rows,
+                            'columns': route.columns,
                             'locations': []  # Initialize the list of locations
                         }
                     # Append location data to the corresponding route
@@ -66,8 +79,10 @@ class RouteController():
     def get_route_by_id(id):
         try:
             route = Route.query.filter_by(id=id,validity=1).first()
+            station=StationController.get_station_by_id(route.station_id)
             if route:
-                return {'id':route.id,'name':route.name}
+                return {'id':route.id,'name':route.name,'station_latitude':station['latitude'],
+                        'station_longitude':station['longitude'],'rows':route.rows,'columns':route.columns}
             else:
                 return {}
         except Exception as e:
